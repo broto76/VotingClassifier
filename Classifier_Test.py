@@ -2,7 +2,7 @@
 """
 Created on Sat May 16 12:49:38 2020
 
-@author: KIIT
+@author: Anirban and Anibrata
 """
 from VotingClassifier1 import VotingClassifier
  
