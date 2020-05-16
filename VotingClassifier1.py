@@ -15,7 +15,6 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-
 class VotingClassifier:
     
     X_Train = 0
@@ -36,6 +35,10 @@ class VotingClassifier:
     KNN_Data = 0
     SVM_Data = 0
     RFC_Data = 0
+    
+    voting_dict = {}
+    
+    result_internal = 0
     
     def __init__(self):
         print("__init__")
@@ -90,7 +93,30 @@ class VotingClassifier:
         self.Weight_KNN = (accuracy_KNN) / (accuracy_KNN + accuracy_SVM + accuracy_RFC)
         self.Weight_SVM = (accuracy_SVM) / (accuracy_KNN + accuracy_SVM + accuracy_RFC)
         self.Weight_RFC = (accuracy_RFC) / (accuracy_KNN + accuracy_SVM + accuracy_RFC)
+        
+    def buildVoteDictionary(self, data):
+        candidates = np.unique(data)
+        for i in range (0,candidates.size):
+            self.voting_dict[candidates[i]] = 0
+            
+    def resetVoteDictionary(self):
+        for x in self.voting_dict:
+            self.voting_dict[x] = 0
     
+    def putVote(self, candidate, voteWeight):
+        self.voting_dict[candidate] = self.voting_dict[candidate] + voteWeight
+    
+    def getVoteResult(self):
+        maxVoteCount = 0
+        maxVoteCandidate = 0
+        
+        for x in self.voting_dict:
+            if (self.voting_dict[x] > maxVoteCount):
+                maxVoteCount = self.voting_dict[x]
+                maxVoteCandidate = x
+        self.resetVoteDictionary()
+        return maxVoteCandidate
+        
     def fit_func(self, features, result):
         
         # Preprocess the data between 0 and 1
@@ -101,13 +127,14 @@ class VotingClassifier:
         self.internalClassifierFit()
         # self.internalClassifierPredict()
         # self.calculateClassifierWeights()
-        self.internalAssignAvgWeight()    
+        self.internalAssignAvgWeight()
+        self.buildVoteDictionary(result)
         
         
     def showInternalAccuracy(self,expected):
-        self.accuracy_KNN_Test = accuracy_score(expected, self.KNN_Data, normalize=True)
-        self.accuracy_SVM_Test = accuracy_score(expected, self.SVM_Data, normalize=True)
-        self.accuracy_RFC_Test = accuracy_score(expected, self.RFC_Data, normalize=True)
+        self.accuracy_KNN_Test = accuracy_score(expected, self.KNN_Data, normalize=False)
+        self.accuracy_SVM_Test = accuracy_score(expected, self.SVM_Data, normalize=False)
+        self.accuracy_RFC_Test = accuracy_score(expected, self.RFC_Data, normalize=False)
         
         
     def predict_on_weight(self, test_features, threshold):
@@ -131,7 +158,24 @@ class VotingClassifier:
         return self.result_internal  
 
         
-    def predict_on_weighted_votes(self, test_features, threshold)
+    def predict_on_weighted_votes(self, test_features, threshold):
+        
+        test_features = self.pre_prepossing(test_features)
+        self.KNN_Data = self.classifier_KNN.predict(test_features)
+        self.SVM_Data = self.classifier_SVM.predict(test_features)
+        self.RFC_Data = self.classifier_RFC.predict(test_features)
+        
+        self.result_internal = np.zeros(self.KNN_Data.size)
+        self.resetVoteDictionary()
+        
+        for i in range (0, self.result_internal.size):
+            self.putVote(self.KNN_Data[i], self.Weight_KNN)
+            self.putVote(self.SVM_Data[i], self.Weight_SVM)
+            self.putVote(self.RFC_Data[i], self.Weight_RFC)
+            
+            self.result_internal[i] = self.getVoteResult()
+        
+        return self.result_internal
         
 
 
@@ -143,9 +187,10 @@ Y = dataset.iloc[:, 6].values
 # Y = Y/2 -1
 X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size=0.2)
 classifier.fit_func(X_Train, Y_Train)
-result = classifier.predict_on_weight(X_Test, 0.5)
+# result = classifier.predict_on_weight(X_Test, 0.5)
+result = classifier.predict_on_weighted_votes(X_Test, 0.5)
 classifier.showInternalAccuracy(Y_Test)
-accuracy_Voting = accuracy_score(Y_Test, result, normalize=True)
+accuracy_Voting = accuracy_score(Y_Test, result, normalize=False)
 
 
 # classifier_KNN = KNeighborsClassifier()
