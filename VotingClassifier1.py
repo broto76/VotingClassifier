@@ -61,24 +61,6 @@ class VotingClassifier:
         self.classifier_KNN.fit(self.X_Train, self.Y_Train)
         self.classifier_SVM.fit(self.X_Train, self.Y_Train)
         self.classifier_RFC.fit(self.X_Train, self.Y_Train)
-    
-    
-    # Not Used
-    def internalClassifierPredict(self):
-        self.Y_Predict_KNN = self.classifier_KNN.predict(self.X_Test)
-        self.Y_Predict_SVM = self.classifier_SVM.predict(self.X_Test)
-        self.Y_Predict_RFC = self.classifier_RFC.predict(self.X_Test)
-    
-        
-    # Not Used
-    def calculateClassifierWeights(self):
-        self.accuracy_KNN = accuracy_score(self.Y_Test, self.Y_Predict_KNN, normalize=False)
-        self.accuracy_SVM = accuracy_score(self.Y_Test, self.Y_Predict_SVM, normalize=False)
-        self.accuracy_RFC = accuracy_score(self.Y_Test, self.Y_Predict_RFC, normalize=False)
-        
-        self.Weight_KNN = (self.accuracy_KNN) / (self.accuracy_KNN + self.accuracy_SVM + self.accuracy_RFC)
-        self.Weight_SVM = (self.accuracy_SVM) / (self.accuracy_KNN + self.accuracy_SVM + self.accuracy_RFC)
-        self.Weight_RFC = (self.accuracy_RFC) / (self.accuracy_KNN + self.accuracy_SVM + self.accuracy_RFC)
         
     def internalAssignAvgWeight(self):
         Y_Predict_KNN = self.classifier_KNN.predict(self.X_Test)
@@ -103,7 +85,7 @@ class VotingClassifier:
     def resetVoteDictionary(self):
         for x in self.voting_dict:
             self.voting_dict[x] = 0
-    
+
     # Not Used
     def putVote(self, candidate, voteWeight):
         self.voting_dict[candidate] = self.voting_dict[candidate] + voteWeight
@@ -117,7 +99,7 @@ class VotingClassifier:
             if (self.voting_dict[x] > maxVoteCount):
                 maxVoteCount = self.voting_dict[x]
                 maxVoteCandidate = x
-        # self.resetVoteDictionary()
+
         return maxVoteCandidate
         
     def fit_func(self, features, result):
@@ -128,11 +110,9 @@ class VotingClassifier:
         # Split the data to training and test set
         self.splitData(features, result)
         self.internalClassifierFit()
-        # self.internalClassifierPredict()
-        # self.calculateClassifierWeights()
+
         self.internalAssignAvgWeight()
         self.buildVoteDictionary(result)
-        
         
     def showInternalAccuracy(self,expected):
         self.accuracy_KNN_Test = accuracy_score(expected, self.KNN_Data, normalize=False)
@@ -175,7 +155,7 @@ class VotingClassifier:
             self.putVote(self.KNN_Data[i], self.Weight_KNN)
             self.putVote(self.SVM_Data[i], self.Weight_SVM)
             self.putVote(self.RFC_Data[i], self.Weight_RFC)
-            
+
             self.result_internal[i] = self.getVoteResult()
             self.resetVoteDictionary()
         
