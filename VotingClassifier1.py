@@ -6,7 +6,6 @@ Created on Sat May  9 14:03:35 2020
 """
 
 import numpy as np
-import pandas as pd
 
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -44,8 +43,8 @@ class VotingClassifier:
         print("__init__")
         # self._testSize = test_size
         
-        self.classifier_KNN = KNeighborsClassifier()
         # TODO
+        self.classifier_KNN = KNeighborsClassifier()
         self.classifier_SVM = SVC(kernel="linear")
         self.classifier_RFC = RandomForestClassifier(criterion='entropy')
         
@@ -93,19 +92,23 @@ class VotingClassifier:
         self.Weight_KNN = (accuracy_KNN) / (accuracy_KNN + accuracy_SVM + accuracy_RFC)
         self.Weight_SVM = (accuracy_SVM) / (accuracy_KNN + accuracy_SVM + accuracy_RFC)
         self.Weight_RFC = (accuracy_RFC) / (accuracy_KNN + accuracy_SVM + accuracy_RFC)
-        
+
+    # Not Used
     def buildVoteDictionary(self, data):
         candidates = np.unique(data)
         for i in range (0,candidates.size):
             self.voting_dict[candidates[i]] = 0
             
+    # Not Used
     def resetVoteDictionary(self):
         for x in self.voting_dict:
             self.voting_dict[x] = 0
     
+    # Not Used
     def putVote(self, candidate, voteWeight):
         self.voting_dict[candidate] = self.voting_dict[candidate] + voteWeight
     
+    # Not Used
     def getVoteResult(self):
         maxVoteCount = 0
         maxVoteCandidate = 0
@@ -114,7 +117,7 @@ class VotingClassifier:
             if (self.voting_dict[x] > maxVoteCount):
                 maxVoteCount = self.voting_dict[x]
                 maxVoteCandidate = x
-        self.resetVoteDictionary()
+        # self.resetVoteDictionary()
         return maxVoteCandidate
         
     def fit_func(self, features, result):
@@ -158,7 +161,7 @@ class VotingClassifier:
         return self.result_internal  
 
         
-    def predict_on_weighted_votes(self, test_features, threshold):
+    def predict_on_weighted_votes(self, test_features):
         
         test_features = self.pre_prepossing(test_features)
         self.KNN_Data = self.classifier_KNN.predict(test_features)
@@ -174,28 +177,7 @@ class VotingClassifier:
             self.putVote(self.RFC_Data[i], self.Weight_RFC)
             
             self.result_internal[i] = self.getVoteResult()
+            self.resetVoteDictionary()
         
         return self.result_internal
         
-
-
-classifier = VotingClassifier()
-path = "D:/Pyhton ML/VotingClassifier/Data/car_evaluation_processed.csv"
-dataset = pd.read_csv(path)
-X = dataset.iloc[:, :-1].values
-Y = dataset.iloc[:, 6].values
-# Y = Y/2 -1
-X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size=0.2)
-classifier.fit_func(X_Train, Y_Train)
-# result = classifier.predict_on_weight(X_Test, 0.5)
-result = classifier.predict_on_weighted_votes(X_Test, 0.5)
-classifier.showInternalAccuracy(Y_Test)
-accuracy_Voting = accuracy_score(Y_Test, result, normalize=False)
-
-
-# classifier_KNN = KNeighborsClassifier()
-# classifier_KNN.fit(X_Train, Y_Train)
-# output = classifier_KNN.predict(X_Test)
-# accuracy = accuracy_score(Y_Test, output, normalize=True)
-
-
